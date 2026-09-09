@@ -1,3 +1,9 @@
+# FORGE v10 — Código manual de acceso
+
+Flujo: transferencia → aprobación admin → código FORGE-XXXXXX → cliente escribe código → cuestionario.
+
+No requiere cambios de esquema D1: el código se guarda en preference_id, campo no usado por SPEI.
+
 # FORGE v8 — Fix desbloqueo de cuestionario
 
 # FORGE v7 — Transferencia SPEI con aprobación

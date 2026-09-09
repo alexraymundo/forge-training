@@ -12,6 +12,15 @@ function json(data, status = 200) {
   });
 }
 
+function generateAccessCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let suffix = "";
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  for (const byte of bytes) suffix += chars[byte % chars.length];
+  return `FORGE-${suffix}`;
+}
+
 function orderId() {
   return `forge_${Date.now()}_${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
 }
@@ -102,6 +111,7 @@ async function adminOrders(request, env) {
     SELECT order_id, plan, amount, status,
            payment_id AS reference,
            payer_email AS reported_by,
+           preference_id AS access_code,
            created_at, updated_at
     FROM orders
     WHERE status IN ('pending_transfer','transfer_reported','approved','rejected')
@@ -123,13 +133,64 @@ async function adminStatus(request, env) {
     return json({ error: "Datos inválidos" }, 400);
   }
 
+  const order = await env.DB.prepare(`
+    SELECT order_id, preference_id
+    FROM orders
+    WHERE order_id = ?
+  `).bind(id).first();
+
+  if (!order) return json({ error: "Orden no encontrada" }, 404);
+
+  let accessCode = order.preference_id || null;
+
+  if (status === "approved" && !accessCode) {
+    accessCode = generateAccessCode();
+  }
+
   await env.DB.prepare(`
     UPDATE orders
-    SET status = ?, updated_at = datetime('now')
+    SET status = ?,
+        preference_id = ?,
+        updated_at = datetime('now')
     WHERE order_id = ?
-  `).bind(status, id).run();
+  `).bind(
+    status,
+    status === "approved" ? accessCode : order.preference_id,
+    id
+  ).run();
 
-  return json({ ok: true, status });
+  return json({
+    ok: true,
+    status,
+    access_code: status === "approved" ? accessCode : null
+  });
+}
+
+async function redeemAccessCode(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const code = String(body.code || "").trim().toUpperCase();
+
+  if (!code) return json({ error: "Código requerido" }, 400);
+
+  const order = await env.DB.prepare(`
+    SELECT order_id, plan, status, preference_id
+    FROM orders
+    WHERE UPPER(preference_id) = ?
+    LIMIT 1
+  `).bind(code).first();
+
+  if (!order || order.status !== "approved") {
+    return json({
+      approved: false,
+      error: "Código inválido o pago no aprobado"
+    }, 404);
+  }
+
+  return json({
+    approved: true,
+    plan: order.plan,
+    order_id: order.order_id
+  });
 }
 
 export default {
@@ -154,6 +215,10 @@ export default {
 
     if (url.pathname === "/api/admin/order-status" && request.method === "POST") {
       return adminStatus(request, env);
+    }
+
+    if (url.pathname === "/api/redeem-access-code" && request.method === "POST") {
+      return redeemAccessCode(request, env);
     }
 
     return env.ASSETS.fetch(request);
