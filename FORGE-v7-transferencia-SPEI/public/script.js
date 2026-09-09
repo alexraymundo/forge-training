@@ -341,15 +341,54 @@ function setPaymentUI(status, plan) {
   }
 
   if (status === "approved") {
+    clearTimeout(paymentPollTimer);
+
     paymentGate.hidden = true;
     questionnaireUnlocked.hidden = false;
+
     if (paymentReturnMessage) {
       paymentReturnMessage.textContent = "Pago confirmado ✓. Ya puedes completar tu perfil FORGE.";
     }
+
     localStorage.setItem("forgePaymentApproved", JSON.stringify({
       plan,
       approvedAt: new Date().toISOString()
     }));
+    localStorage.removeItem("forgePendingOrder");
+
+    // Si el cliente sigue viendo la ventana de transferencia,
+    // mostrar confirmación y cerrarla automáticamente.
+    if (transferModal && !transferModal.hidden) {
+      if (transferWaiting) {
+        const title = transferWaiting.querySelector("h4");
+        const text = transferWaiting.querySelector("p");
+
+        if (title) title.textContent = "Pago aprobado ✓";
+        if (text) {
+          text.textContent = "Tu transferencia fue confirmada. Ya puedes completar tu perfil FORGE.";
+        }
+
+        transferConfirm.hidden = true;
+        transferWaiting.hidden = false;
+      }
+
+      setTimeout(() => {
+        closeTransferModal();
+
+        document.getElementById("cuestionario")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        document.getElementById("cuestionario")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 250);
+    }
+
     return;
   }
 
