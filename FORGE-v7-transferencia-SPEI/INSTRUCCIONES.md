@@ -1,4 +1,4 @@
-# FORGE v7 — Transferencia SPEI con aprobación
+# FORGE v7 — FORGE v7 listo para Cloudflare
 
 Esta versión no necesita credenciales de Mercado Pago para funcionar.
 
