@@ -812,3 +812,20 @@ footer {
 .access-code-row input:focus{border-color:var(--gold)}
 .access-code-box small{display:block;margin-top:9px;color:#817b72;font-size:.7rem}
 @media(max-width:640px){.access-code-row{grid-template-columns:1fr}}
+
+.standalone-access-body,.questionnaire-page-body{background:#050505;min-height:100vh}
+.standalone-access{min-height:calc(100vh - 100px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:70px 6%}
+.standalone-access h1{font-size:clamp(2.8rem,7vw,5.7rem);line-height:.95;letter-spacing:-.06em}
+.standalone-access>p{max-width:680px;color:var(--muted);margin:18px auto 0}
+.access-symbol{width:74px;height:74px;display:grid;place-items:center;border:1px solid var(--gold);color:var(--gold-bright);font-size:1.6rem;margin-bottom:25px}
+.standalone-access-card{width:min(620px,100%);margin:32px auto 18px;padding:25px;border:1px solid rgba(230,173,46,.22);background:#080706;text-align:left}
+.standalone-access-card label{display:block;font-weight:800;font-size:.8rem;margin-bottom:9px}
+.standalone-access-card input{width:100%;min-height:55px;padding:0 15px;background:#050505;border:1px solid rgba(230,173,46,.28);color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1rem;text-transform:uppercase;outline:none}
+.standalone-access-card input:focus{border-color:var(--gold)}
+.standalone-access-card .gold-btn{width:100%;margin-top:12px}
+.code-status{min-height:22px;margin-top:11px;font-size:.76rem}
+.code-status.error{color:#e6a595}.code-status.success{color:#d9c179}
+.access-help{color:#746f67}
+.questionnaire-page{padding:70px 6% 100px}
+.access-checking{text-align:center;padding:120px 0}
+.standalone-questionnaire-shell{max-width:1200px;margin:35px auto 0}
