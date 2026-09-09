@@ -12,6 +12,46 @@ function json(data, status = 200) {
   });
 }
 
+
+async function ensureProfilesTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS profiles (
+      order_id TEXT PRIMARY KEY,
+      access_code TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      client_name TEXT NOT NULL,
+      whatsapp TEXT,
+      email TEXT,
+      age INTEGER,
+      height REAL,
+      weight REAL,
+      main_goal TEXT,
+      priority_area TEXT,
+      training_level TEXT,
+      training_days INTEGER,
+      session_time TEXT,
+      training_place TEXT,
+      equipment_available TEXT,
+      likes TEXT,
+      dislikes TEXT,
+      limitations TEXT,
+      client_status TEXT NOT NULL DEFAULT 'questionnaire_submitted',
+      submitted_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
+  const migrations = [
+    "ALTER TABLE profiles ADD COLUMN whatsapp TEXT",
+    "ALTER TABLE profiles ADD COLUMN email TEXT",
+    "ALTER TABLE profiles ADD COLUMN client_status TEXT NOT NULL DEFAULT 'questionnaire_submitted'"
+  ];
+
+  for (const sql of migrations) {
+    try { await env.DB.prepare(sql).run(); } catch (_) {}
+  }
+}
+
 function generateAccessCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let suffix = "";
@@ -193,6 +233,192 @@ async function redeemAccessCode(request, env) {
   });
 }
 
+
+async function submitProfile(request, env) {
+  await ensureProfilesTable(env);
+
+  const body = await request.json().catch(() => ({}));
+  const code = String(body.access_code || "").trim().toUpperCase();
+  const profile = body.profile || {};
+
+  if (!code) {
+    return json({ error: "Código de acceso requerido" }, 400);
+  }
+
+  const order = await env.DB.prepare(`
+    SELECT order_id, plan, status, preference_id
+    FROM orders
+    WHERE UPPER(preference_id) = ?
+    LIMIT 1
+  `).bind(code).first();
+
+  if (!order || order.status !== "approved") {
+    return json({ error: "Código inválido o pago no aprobado" }, 403);
+  }
+
+  const clientName = String(profile.clientName || "").trim();
+  if (!clientName) {
+    return json({ error: "Nombre requerido" }, 400);
+  }
+
+  await env.DB.prepare(`
+    INSERT INTO profiles (
+      order_id, access_code, plan, client_name, whatsapp, email, age, height, weight,
+      main_goal, priority_area, training_level, training_days,
+      session_time, training_place, equipment_available,
+      likes, dislikes, limitations, client_status, submitted_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'questionnaire_submitted', datetime('now'), datetime('now'))
+    ON CONFLICT(order_id) DO UPDATE SET
+      access_code = excluded.access_code,
+      plan = excluded.plan,
+      client_name = excluded.client_name,
+      whatsapp = excluded.whatsapp,
+      email = excluded.email,
+      age = excluded.age,
+      height = excluded.height,
+      weight = excluded.weight,
+      main_goal = excluded.main_goal,
+      priority_area = excluded.priority_area,
+      training_level = excluded.training_level,
+      training_days = excluded.training_days,
+      session_time = excluded.session_time,
+      training_place = excluded.training_place,
+      equipment_available = excluded.equipment_available,
+      likes = excluded.likes,
+      dislikes = excluded.dislikes,
+      limitations = excluded.limitations,
+      updated_at = datetime('now')
+  `).bind(
+    order.order_id,
+    code,
+    order.plan,
+    clientName,
+    profile.whatsapp || null,
+    profile.email || null,
+    profile.age || null,
+    profile.height || null,
+    profile.weight || null,
+    profile.mainGoal || null,
+    profile.priorityArea || null,
+    profile.trainingLevel || null,
+    profile.trainingDays || null,
+    profile.sessionTime || null,
+    profile.trainingPlace || null,
+    profile.equipmentAvailable || null,
+    profile.likes || null,
+    profile.dislikes || null,
+    profile.limitations || null
+  ).run();
+
+  await env.DB.prepare(`
+    UPDATE orders
+    SET status = 'profile_submitted',
+        preference_id = ?,
+        updated_at = datetime('now')
+    WHERE order_id = ?
+  `).bind(`USED:${code}`, order.order_id).run();
+
+  return json({
+    ok: true,
+    order_id: order.order_id,
+    plan: order.plan
+  });
+}
+
+async function adminProfiles(request, env) {
+  if (!isAdmin(request, env)) return json({ error: "No autorizado" }, 401);
+
+  await ensureProfilesTable(env);
+
+  const result = await env.DB.prepare(`
+    SELECT
+      p.order_id,
+      p.access_code,
+      p.plan,
+      p.client_name,
+      p.whatsapp,
+      p.email,
+      p.client_status,
+      p.age,
+      p.height,
+      p.weight,
+      p.main_goal,
+      p.priority_area,
+      p.training_level,
+      p.training_days,
+      p.session_time,
+      p.training_place,
+      p.equipment_available,
+      p.likes,
+      p.dislikes,
+      p.limitations,
+      p.submitted_at,
+      p.updated_at
+    FROM profiles p
+    ORDER BY p.updated_at DESC
+    LIMIT 200
+  `).all();
+
+  return json({ profiles: result.results || [] });
+}
+
+
+async function adminUpdateClientStatus(request, env) {
+  if (!isAdmin(request, env)) return json({ error: "No autorizado" }, 401);
+  await ensureProfilesTable(env);
+
+  const body = await request.json().catch(() => ({}));
+  const orderId = String(body.order_id || "");
+  const status = String(body.status || "");
+
+  const allowed = [
+    "questionnaire_submitted",
+    "routine_in_progress",
+    "delivered"
+  ];
+
+  if (!orderId || !allowed.includes(status)) {
+    return json({ error: "Estado inválido" }, 400);
+  }
+
+  await env.DB.prepare(`
+    UPDATE profiles
+    SET client_status = ?, updated_at = datetime('now')
+    WHERE order_id = ?
+  `).bind(status, orderId).run();
+
+  return json({ ok: true, status });
+}
+
+async function adminReopenAccess(request, env) {
+  if (!isAdmin(request, env)) return json({ error: "No autorizado" }, 401);
+
+  const body = await request.json().catch(() => ({}));
+  const orderId = String(body.order_id || "");
+  if (!orderId) return json({ error: "Orden requerida" }, 400);
+
+  const order = await env.DB.prepare(`
+    SELECT order_id, plan
+    FROM orders
+    WHERE order_id = ?
+  `).bind(orderId).first();
+
+  if (!order) return json({ error: "Orden no encontrada" }, 404);
+
+  const code = generateAccessCode();
+
+  await env.DB.prepare(`
+    UPDATE orders
+    SET status = 'approved',
+        preference_id = ?,
+        updated_at = datetime('now')
+    WHERE order_id = ?
+  `).bind(code, orderId).run();
+
+  return json({ ok: true, access_code: code });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -219,6 +445,22 @@ export default {
 
     if (url.pathname === "/api/redeem-access-code" && request.method === "POST") {
       return redeemAccessCode(request, env);
+    }
+
+    if (url.pathname === "/api/submit-profile" && request.method === "POST") {
+      return submitProfile(request, env);
+    }
+
+    if (url.pathname === "/api/admin/profiles" && request.method === "GET") {
+      return adminProfiles(request, env);
+    }
+
+    if (url.pathname === "/api/admin/client-status" && request.method === "POST") {
+      return adminUpdateClientStatus(request, env);
+    }
+
+    if (url.pathname === "/api/admin/reopen-access" && request.method === "POST") {
+      return adminReopenAccess(request, env);
     }
 
     return env.ASSETS.fetch(request);

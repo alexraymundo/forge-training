@@ -14,7 +14,20 @@
     .admin-order small,.admin-order span{display:block;color:#8f8a80}
     .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
     .reject-btn{border:1px solid #6e5555;background:transparent;color:#d7a6a6;padding:10px 14px;cursor:pointer}
-    @media(max-width:700px){.admin-order{grid-template-columns:1fr}}
+    .admin-section-title{margin-top:55px}
+    .admin-section-title h2{font-size:2rem;margin:5px 0}
+    .admin-section-title p{color:#8f8a80}
+    .profile-card{border:1px solid rgba(230,173,46,.22);background:#090806;padding:22px;margin-top:16px}
+    .profile-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+    .profile-top h3{font-size:1.35rem;margin:0}
+    .profile-plan{color:#e6ad2e;font-weight:800}
+    .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+    .profile-field{border:1px solid rgba(230,173,46,.10);background:#070706;padding:11px 12px}
+    .profile-field span{display:block;color:#746e65;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
+    .profile-field strong{display:block;color:#ddd5c7;margin-top:4px;font-size:.8rem;white-space:pre-wrap}
+    .profile-field.wide{grid-column:1/-1}.profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    @media(max-width:850px){.profile-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){.admin-order{grid-template-columns:1fr}.profile-grid{grid-template-columns:1fr}.profile-field.wide{grid-column:auto}.profile-top{flex-direction:column}}
   </style>
 </head>
 <body>
@@ -30,11 +43,20 @@
     </section>
 
     <section id="orders"></section>
+
+    <div class="admin-section-title">
+      <span class="kicker">CLIENTES</span>
+      <h2>Perfiles recibidos</h2>
+      <p>Cuestionarios completados después de validar el pago.</p>
+    </div>
+
+    <section id="profiles"></section>
   </main>
 
   <script>
     const keyInput = document.getElementById("adminKey");
     const ordersEl = document.getElementById("orders");
+    const profilesEl = document.getElementById("profiles");
 
     async function loadOrders() {
       const key = keyInput.value;
@@ -47,6 +69,7 @@
         return;
       }
       render(data.orders || []);
+      await loadProfiles();
     }
 
     function render(orders) {
@@ -67,6 +90,138 @@
           </div>
         </article>
       `).join("");
+    }
+
+    async function loadProfiles() {
+      const key = keyInput.value;
+
+      const r = await fetch("/api/admin/profiles", {
+        headers: { Authorization: `Bearer ${key}` },
+        cache: "no-store"
+      });
+
+      const data = await r.json();
+
+      if (!r.ok) {
+        profilesEl.innerHTML = "";
+        return;
+      }
+
+      renderProfiles(data.profiles || []);
+    }
+
+    function safe(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function renderProfiles(profiles) {
+      if (!profiles.length) {
+        profilesEl.innerHTML = `
+          <div class="profile-card">
+            <span style="color:#8f8a80">Todavía no hay cuestionarios enviados.</span>
+          </div>`;
+        return;
+      }
+
+      profilesEl.innerHTML = profiles.map(p => `
+        <article class="profile-card">
+          <div class="profile-top">
+            <div>
+              <h3>${safe(p.client_name)}</h3>
+              <span class="profile-plan">${safe(p.plan)}</span>
+            </div>
+            <small style="color:#777">${safe(p.updated_at)}</small>
+          </div>
+
+          <div class="profile-grid">
+            <div class="profile-field"><span>WhatsApp</span><strong>${safe(p.whatsapp)}</strong></div>
+            <div class="profile-field"><span>Correo</span><strong>${safe(p.email)}</strong></div>
+            <div class="profile-field"><span>Estado</span><strong>${statusLabel(p.client_status)}</strong></div>
+            <div class="profile-field"><span>Edad</span><strong>${safe(p.age)}</strong></div>
+            <div class="profile-field"><span>Estatura</span><strong>${safe(p.height)} cm</strong></div>
+            <div class="profile-field"><span>Peso</span><strong>${safe(p.weight)} kg</strong></div>
+
+            <div class="profile-field"><span>Objetivo</span><strong>${safe(p.main_goal)}</strong></div>
+            <div class="profile-field"><span>Prioridad</span><strong>${safe(p.priority_area)}</strong></div>
+            <div class="profile-field"><span>Nivel</span><strong>${safe(p.training_level)}</strong></div>
+
+            <div class="profile-field"><span>Días</span><strong>${safe(p.training_days)}</strong></div>
+            <div class="profile-field"><span>Sesión</span><strong>${safe(p.session_time)}</strong></div>
+            <div class="profile-field"><span>Lugar</span><strong>${safe(p.training_place)}</strong></div>
+
+            <div class="profile-field wide"><span>Equipo disponible</span><strong>${safe(p.equipment_available)}</strong></div>
+            <div class="profile-field wide"><span>Ejercicios preferidos</span><strong>${safe(p.likes)}</strong></div>
+            <div class="profile-field wide"><span>Ejercicios a evitar</span><strong>${safe(p.dislikes)}</strong></div>
+            <div class="profile-field wide"><span>Lesiones / limitaciones</span><strong>${safe(p.limitations)}</strong></div>
+
+            <div class="profile-field wide"><span>Orden</span><strong>${safe(p.order_id)}</strong></div>
+          </div>
+
+          <div class="profile-actions">
+            <button class="gold-btn" onclick="updateClientStatus('${p.order_id}','routine_in_progress')">Marcar en proceso</button>
+            <button class="gold-btn" onclick="updateClientStatus('${p.order_id}','delivered')">Marcar entregada</button>
+            <button class="outline-btn" onclick="reopenAccess('${p.order_id}')">Reabrir acceso</button>
+            ${p.whatsapp ? `<a class="outline-btn" target="_blank" rel="noopener" href="https://wa.me/52${String(p.whatsapp).replace(/\D/g,'')}">WhatsApp</a>` : ""}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function statusLabel(status) {
+      return {
+        questionnaire_submitted: "Cuestionario enviado",
+        routine_in_progress: "Rutina en proceso",
+        delivered: "Entregada"
+      }[status] || safe(status);
+    }
+
+    async function updateClientStatus(orderId, status) {
+      const r = await fetch("/api/admin/client-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${keyInput.value}`
+        },
+        body: JSON.stringify({ order_id: orderId, status })
+      });
+
+      if (!r.ok) {
+        alert("No se pudo actualizar el estado.");
+        return;
+      }
+
+      await loadProfiles();
+    }
+
+    async function reopenAccess(orderId) {
+      if (!confirm("Esto generará un nuevo código para que el cliente pueda volver a entrar al cuestionario. ¿Continuar?")) return;
+
+      const r = await fetch("/api/admin/reopen-access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${keyInput.value}`
+        },
+        body: JSON.stringify({ order_id: orderId })
+      });
+
+      const data = await r.json();
+
+      if (!r.ok || !data.access_code) {
+        alert("No se pudo reabrir el acceso.");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(data.access_code);
+      } catch (_) {}
+
+      alert(`Nuevo código de acceso:\\n\\n${data.access_code}\\n\\nSe copió al portapapeles.`);
+      loadOrders();
     }
 
     async function setStatus(orderId, status) {

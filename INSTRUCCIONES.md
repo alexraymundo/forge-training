@@ -1,3 +1,24 @@
+# FORGE v13 — Contacto, estados y código de un solo uso
+
+Cambios:
+- WhatsApp y correo obligatorios en cuestionario.
+- Estado de cliente en admin: cuestionario enviado / rutina en proceso / entregada.
+- Código se consume al enviar perfil.
+- Admin puede reabrir acceso y generar un nuevo código.
+- Botón directo de WhatsApp en perfiles.
+
+# FORGE v12 — Perfiles guardados en D1
+
+Flujo completo:
+1. Pago aprobado.
+2. Admin genera código.
+3. Cliente usa código.
+4. Cliente completa cuestionario.
+5. Perfil se guarda automáticamente en D1.
+6. Alex lo consulta desde /admin.html.
+
+No necesitas crear manualmente la tabla profiles: el Worker usa CREATE TABLE IF NOT EXISTS.
+
 # FORGE v10 — Código manual de acceso
 
 Flujo: transferencia → aprobación admin → código FORGE-XXXXXX → cliente escribe código → cuestionario.

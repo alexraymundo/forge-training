@@ -108,6 +108,7 @@ function buildSummary() {
   const d = data();
   const rows = [
     ["Nombre",d.clientName],["Plan",d.selectedPlan],["Edad",d.age],
+    ["WhatsApp",d.whatsapp],["Correo",d.email],
     ["Objetivo",d.mainGoal],["Prioridad",d.priorityArea],
     ["Nivel",d.trainingLevel],["Días",d.trainingDays],
     ["Sesión",d.sessionTime],["Lugar",d.trainingPlace],
@@ -124,12 +125,74 @@ next.addEventListener("click", () => {
 });
 prev.addEventListener("click", () => showStep(step - 1));
 
-form.addEventListener("submit", e => {
+form.addEventListener("submit", async e => {
   e.preventDefault();
   if (!validateStep()) return;
-  localStorage.setItem("forgeClientProfile", JSON.stringify({...data(), savedAt:new Date().toISOString()}));
-  form.hidden = true;
-  success.hidden = false;
+
+  const rawAccess = sessionStorage.getItem("forgeQuestionnaireAccess");
+  if (!rawAccess) {
+    window.location.replace("/acceso.html");
+    return;
+  }
+
+  let access;
+  try {
+    access = JSON.parse(rawAccess);
+  } catch (_) {
+    window.location.replace("/acceso.html");
+    return;
+  }
+
+  const submitButton = document.getElementById("finishQuestionnaire");
+  const oldText = submitButton.textContent;
+  submitButton.disabled = true;
+  submitButton.textContent = "Enviando...";
+
+  try {
+    const profile = data();
+
+    const response = await fetch("/api/submit-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_code: access.code,
+        profile
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || "No se pudo guardar el perfil");
+    }
+
+    localStorage.setItem(
+      "forgeClientProfile",
+      JSON.stringify({
+        ...profile,
+        orderId: result.order_id,
+        savedAt: new Date().toISOString()
+      })
+    );
+
+    form.hidden = true;
+    success.hidden = false;
+    sessionStorage.removeItem("forgeQuestionnaireAccess");
+
+    const successText = success.querySelector("p");
+    if (successText) {
+      successText.textContent =
+        "Tu información fue enviada correctamente a FORGE. Alex ya puede verla desde su panel.";
+    }
+  } catch (error) {
+    console.error(error);
+    errorBox.textContent =
+      "No pudimos enviar tu perfil. Intenta nuevamente.";
+    errorBox.hidden = false;
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = oldText;
+  }
 });
 
 showStep(1);

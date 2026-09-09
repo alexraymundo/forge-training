@@ -829,3 +829,9 @@ footer {
 .questionnaire-page{padding:70px 6% 100px}
 .access-checking{text-align:center;padding:120px 0}
 .standalone-questionnaire-shell{max-width:1200px;margin:35px auto 0}
+
+.profile-actions .gold-btn,
+.profile-actions .outline-btn{
+  font-size:.72rem;
+  padding:10px 13px;
+}
