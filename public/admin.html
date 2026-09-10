@@ -3,280 +3,377 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FORGE | Pagos</title>
-  <link rel="stylesheet" href="style.css">
+  <title>FORGE | Admin</title>
+  <link rel="stylesheet" href="/style.css">
   <style>
     body{background:#050505;color:#fff}
-    .admin-wrap{max-width:1050px;margin:0 auto;padding:60px 5%}
-    .admin-login,.admin-order{border:1px solid rgba(230,173,46,.22);background:#090806;padding:22px;margin-top:18px}
-    .admin-login input{width:100%;min-height:48px;background:#050505;border:1px solid rgba(230,173,46,.22);color:white;padding:0 12px;margin:12px 0}
-    .admin-order{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
-    .admin-order small,.admin-order span{display:block;color:#8f8a80}
-    .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .reject-btn{border:1px solid #6e5555;background:transparent;color:#d7a6a6;padding:10px 14px;cursor:pointer}
-    .admin-section-title{margin-top:55px}
-    .admin-section-title h2{font-size:2rem;margin:5px 0}
-    .admin-section-title p{color:#8f8a80}
-    .profile-card{border:1px solid rgba(230,173,46,.22);background:#090806;padding:22px;margin-top:16px}
-    .profile-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
-    .profile-top h3{font-size:1.35rem;margin:0}
-    .profile-plan{color:#e6ad2e;font-weight:800}
-    .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
-    .profile-field{border:1px solid rgba(230,173,46,.10);background:#070706;padding:11px 12px}
-    .profile-field span{display:block;color:#746e65;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
-    .profile-field strong{display:block;color:#ddd5c7;margin-top:4px;font-size:.8rem;white-space:pre-wrap}
-    .profile-field.wide{grid-column:1/-1}.profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-    @media(max-width:850px){.profile-grid{grid-template-columns:1fr 1fr}}
-    @media(max-width:700px){.admin-order{grid-template-columns:1fr}.profile-grid{grid-template-columns:1fr}.profile-field.wide{grid-column:auto}.profile-top{flex-direction:column}}
+    .admin-shell{max-width:1250px;margin:0 auto;padding:40px 5% 80px}
+    .admin-top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:28px}
+    .admin-top h1{font-size:clamp(2.2rem,5vw,4rem);margin:4px 0 0;letter-spacing:-.05em}
+    .admin-top p{color:#8f8a80;margin-top:8px}
+    .admin-login{display:flex;gap:10px;align-items:center}
+    .admin-login input{min-height:46px;background:#070706;border:1px solid rgba(230,173,46,.22);color:#fff;padding:0 12px;min-width:240px}
+    .dashboard-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 28px}
+    .summary-card{border:1px solid rgba(230,173,46,.16);background:#090806;padding:18px}
+    .summary-card span{display:block;color:#777169;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}
+    .summary-card strong{display:block;font-size:2rem;margin-top:6px;color:#e6ad2e}
+    .tabs{display:flex;gap:8px;border-bottom:1px solid rgba(230,173,46,.14);margin-bottom:22px}
+    .tab-btn{border:0;background:transparent;color:#817b72;padding:13px 16px;cursor:pointer;font-weight:800;border-bottom:2px solid transparent}
+    .tab-btn.active{color:#f0e9dc;border-bottom-color:#e6ad2e}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .section-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+    .filter-btn{border:1px solid rgba(230,173,46,.16);background:#070706;color:#8f8a80;padding:8px 11px;cursor:pointer;font-size:.72rem}
+    .filter-btn.active{color:#f4ead7;border-color:#e6ad2e}
+    .client-list{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .client-card{border:1px solid rgba(230,173,46,.18);background:#090806;padding:20px}
+    .client-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .client-head h3{margin:0;font-size:1.2rem}
+    .client-meta{color:#8f8a80;font-size:.75rem;margin-top:4px}
+    .status-pill{padding:6px 9px;border:1px solid rgba(230,173,46,.18);font-size:.68rem;color:#d8c184;white-space:nowrap}
+    .client-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .client-field{border:1px solid rgba(230,173,46,.09);background:#070706;padding:10px}
+    .client-field span{display:block;color:#6f6a62;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em}
+    .client-field strong{display:block;color:#ddd5c7;font-size:.78rem;margin-top:3px;white-space:pre-wrap}
+    .client-field.wide{grid-column:1/-1}
+    .client-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .client-actions .gold-btn,.client-actions .outline-btn{padding:9px 11px;font-size:.7rem}
+    .payment-list{display:grid;gap:10px}
+    .payment-row{display:grid;grid-template-columns:1.2fr .8fr .8fr .7fr auto;gap:14px;align-items:center;border:1px solid rgba(230,173,46,.14);background:#090806;padding:14px 16px}
+    .payment-row small{color:#777169}
+    .payment-actions{display:flex;gap:6px}
+    .reject-btn{border:1px solid #6e5555;background:transparent;color:#d7a6a6;padding:9px 10px;cursor:pointer}
+    .empty-state{border:1px solid rgba(230,173,46,.12);background:#080706;padding:24px;color:#817b72}
+    @media(max-width:900px){
+      .dashboard-summary{grid-template-columns:1fr}
+      .client-list{grid-template-columns:1fr}
+      .payment-row{grid-template-columns:1fr 1fr}
+      .payment-actions{grid-column:1/-1}
+      .admin-top{flex-direction:column;align-items:flex-start}
+      .admin-login{width:100%}
+      .admin-login input{flex:1;min-width:0}
+    }
+    @media(max-width:600px){
+      .client-grid{grid-template-columns:1fr}
+      .client-field.wide{grid-column:auto}
+      .payment-row{grid-template-columns:1fr}
+      .payment-actions{grid-column:auto}
+      .tabs{overflow:auto}
+    }
   </style>
 </head>
 <body>
-  <main class="admin-wrap">
-    <span class="kicker">FORGE ADMIN</span>
-    <h1>Validación de transferencias</h1>
-    <p style="color:#938d84">Verifica el depósito directamente en tu banca antes de aprobar.</p>
+  <main class="admin-shell">
+    <div class="admin-top">
+      <div>
+        <span class="kicker">FORGE ADMIN</span>
+        <h1>Panel de clientes</h1>
+        <p>Gestiona perfiles, estados y pagos desde un solo lugar.</p>
+      </div>
 
-    <section class="admin-login">
-      <label>Clave de administrador</label>
-      <input id="adminKey" type="password" autocomplete="current-password" placeholder="Ingresa tu clave">
-      <button class="gold-btn" id="loadOrders">Entrar</button>
-    </section>
-
-    <section id="orders"></section>
-
-    <div class="admin-section-title">
-      <span class="kicker">CLIENTES</span>
-      <h2>Perfiles recibidos</h2>
-      <p>Cuestionarios completados después de validar el pago.</p>
+      <div class="admin-login">
+        <input id="adminKey" type="password" autocomplete="current-password" placeholder="Clave admin">
+        <button class="gold-btn" id="loadDashboard">Entrar</button>
+      </div>
     </div>
 
-    <section id="profiles"></section>
+    <section id="dashboard" hidden>
+      <div class="dashboard-summary">
+        <div class="summary-card">
+          <span>Pagos pendientes</span>
+          <strong id="summaryPending">0</strong>
+        </div>
+        <div class="summary-card">
+          <span>Clientes activos</span>
+          <strong id="summaryActive">0</strong>
+        </div>
+        <div class="summary-card">
+          <span>Entregadas</span>
+          <strong id="summaryDelivered">0</strong>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="clients">Clientes</button>
+        <button class="tab-btn" data-tab="payments">Pagos</button>
+        <button class="tab-btn" data-tab="delivered">Entregadas</button>
+      </div>
+
+      <section class="tab-panel active" id="tab-clients">
+        <div class="section-tools">
+          <div class="filter-row">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="questionnaire_submitted">Cuestionario enviado</button>
+            <button class="filter-btn" data-filter="routine_in_progress">En proceso</button>
+          </div>
+        </div>
+        <div id="clientsList" class="client-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-payments">
+        <div id="paymentsList" class="payment-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-delivered">
+        <div id="deliveredList" class="client-list"></div>
+      </section>
+    </section>
   </main>
 
   <script>
     const keyInput = document.getElementById("adminKey");
-    const ordersEl = document.getElementById("orders");
-    const profilesEl = document.getElementById("profiles");
+    const dashboard = document.getElementById("dashboard");
+    const clientsList = document.getElementById("clientsList");
+    const paymentsList = document.getElementById("paymentsList");
+    const deliveredList = document.getElementById("deliveredList");
 
-    async function loadOrders() {
-      const key = keyInput.value;
-      const r = await fetch("/api/admin/orders", {
-        headers: { Authorization: `Bearer ${key}` }
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        alert("Clave incorrecta o error al consultar.");
-        return;
-      }
-      render(data.orders || []);
-      await loadProfiles();
+    let allOrders = [];
+    let allProfiles = [];
+    let currentFilter = "all";
+
+    function safe(v){
+      if(v===null||v===undefined||v==="") return "—";
+      return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
 
-    function render(orders) {
-      ordersEl.innerHTML = orders.map(o => `
-        <article class="admin-order">
-          <div>
-            <strong>${o.plan} · $${o.amount} MXN</strong>
-            <span>Referencia: ${o.reference || "—"}</span>
-            <span>Estado: ${o.status}</span>
-            <span>Reportado por: ${o.reported_by || "—"}</span>
-            ${o.access_code ? `<span><strong>Código acceso:</strong> ${o.access_code}</span>` : ""}
-            <small>Orden: ${o.order_id}</small>
-          </div>
-          <div class="admin-actions">
-            <button class="gold-btn" onclick="setStatus('${o.order_id}','approved')">Aprobar</button>
-            ${o.access_code ? `<button class="gold-btn" onclick="copyAccessCode('${o.access_code}')">Copiar código</button>` : ""}
-            <button class="reject-btn" onclick="setStatus('${o.order_id}','rejected')">Rechazar</button>
-          </div>
-        </article>
-      `).join("");
-    }
-
-    async function loadProfiles() {
-      const key = keyInput.value;
-
-      const r = await fetch("/api/admin/profiles", {
-        headers: { Authorization: `Bearer ${key}` },
-        cache: "no-store"
-      });
-
-      const data = await r.json();
-
-      if (!r.ok) {
-        profilesEl.innerHTML = "";
-        return;
-      }
-
-      renderProfiles(data.profiles || []);
-    }
-
-    function safe(value) {
-      if (value === null || value === undefined || value === "") return "—";
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
-
-    function renderProfiles(profiles) {
-      if (!profiles.length) {
-        profilesEl.innerHTML = `
-          <div class="profile-card">
-            <span style="color:#8f8a80">Todavía no hay cuestionarios enviados.</span>
-          </div>`;
-        return;
-      }
-
-      profilesEl.innerHTML = profiles.map(p => `
-        <article class="profile-card">
-          <div class="profile-top">
-            <div>
-              <h3>${safe(p.client_name)}</h3>
-              <span class="profile-plan">${safe(p.plan)}</span>
-            </div>
-            <small style="color:#777">${safe(p.updated_at)}</small>
-          </div>
-
-          <div class="profile-grid">
-            <div class="profile-field"><span>WhatsApp</span><strong>${safe(p.whatsapp)}</strong></div>
-            <div class="profile-field"><span>Correo</span><strong>${safe(p.email)}</strong></div>
-            <div class="profile-field"><span>Estado</span><strong>${statusLabel(p.client_status)}</strong></div>
-            <div class="profile-field"><span>Edad</span><strong>${safe(p.age)}</strong></div>
-            <div class="profile-field"><span>Estatura</span><strong>${safe(p.height)} cm</strong></div>
-            <div class="profile-field"><span>Peso</span><strong>${safe(p.weight)} kg</strong></div>
-
-            <div class="profile-field"><span>Objetivo</span><strong>${safe(p.main_goal)}</strong></div>
-            <div class="profile-field"><span>Prioridad</span><strong>${safe(p.priority_area)}</strong></div>
-            <div class="profile-field"><span>Nivel</span><strong>${safe(p.training_level)}</strong></div>
-
-            <div class="profile-field"><span>Días</span><strong>${safe(p.training_days)}</strong></div>
-            <div class="profile-field"><span>Sesión</span><strong>${safe(p.session_time)}</strong></div>
-            <div class="profile-field"><span>Lugar</span><strong>${safe(p.training_place)}</strong></div>
-
-            <div class="profile-field wide"><span>Equipo disponible</span><strong>${safe(p.equipment_available)}</strong></div>
-            <div class="profile-field wide"><span>Ejercicios preferidos</span><strong>${safe(p.likes)}</strong></div>
-            <div class="profile-field wide"><span>Ejercicios a evitar</span><strong>${safe(p.dislikes)}</strong></div>
-            <div class="profile-field wide"><span>Lesiones / limitaciones</span><strong>${safe(p.limitations)}</strong></div>
-
-            <div class="profile-field wide"><span>Orden</span><strong>${safe(p.order_id)}</strong></div>
-          </div>
-
-          <div class="profile-actions">
-            <button class="gold-btn" onclick="updateClientStatus('${p.order_id}','routine_in_progress')">Marcar en proceso</button>
-            <button class="gold-btn" onclick="updateClientStatus('${p.order_id}','delivered')">Marcar entregada</button>
-            <button class="outline-btn" onclick="reopenAccess('${p.order_id}')">Reabrir acceso</button>
-            ${p.whatsapp ? `<a class="outline-btn" target="_blank" rel="noopener" href="https://wa.me/52${String(p.whatsapp).replace(/\D/g,'')}">WhatsApp</a>` : ""}
-          </div>
-        </article>
-      `).join("");
-    }
-
-    function statusLabel(status) {
+    function statusLabel(status){
       return {
-        questionnaire_submitted: "Cuestionario enviado",
-        routine_in_progress: "Rutina en proceso",
-        delivered: "Entregada"
+        questionnaire_submitted:"Cuestionario enviado",
+        routine_in_progress:"Rutina en proceso",
+        delivered:"Entregada"
       }[status] || safe(status);
     }
 
-    async function updateClientStatus(orderId, status) {
-      const r = await fetch("/api/admin/client-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keyInput.value}`
-        },
-        body: JSON.stringify({ order_id: orderId, status })
+    function planLabel(plan){
+      return {
+        essential:"Essential",
+        forge_plus:"FORGE+",
+        coaching:"Coaching"
+      }[plan] || safe(plan);
+    }
+
+    async function fetchData(){
+      const key = keyInput.value;
+
+      const [ordersRes, profilesRes] = await Promise.all([
+        fetch("/api/admin/orders",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"}),
+        fetch("/api/admin/profiles",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"})
+      ]);
+
+      if(!ordersRes.ok || !profilesRes.ok){
+        alert("Clave incorrecta o no se pudo cargar el panel.");
+        return false;
+      }
+
+      const ordersData = await ordersRes.json();
+      const profilesData = await profilesRes.json();
+
+      allOrders = ordersData.orders || [];
+      allProfiles = profilesData.profiles || [];
+
+      dashboard.hidden = false;
+      renderAll();
+      return true;
+    }
+
+    function renderAll(){
+      renderSummary();
+      renderClients();
+      renderPayments();
+      renderDelivered();
+    }
+
+    function renderSummary(){
+      const pending = allOrders.filter(o =>
+        ["pending_transfer","transfer_reported"].includes(o.status)
+      ).length;
+
+      const active = allProfiles.filter(p =>
+        ["questionnaire_submitted","routine_in_progress"].includes(p.client_status)
+      ).length;
+
+      const delivered = allProfiles.filter(p =>
+        p.client_status === "delivered"
+      ).length;
+
+      document.getElementById("summaryPending").textContent = pending;
+      document.getElementById("summaryActive").textContent = active;
+      document.getElementById("summaryDelivered").textContent = delivered;
+    }
+
+    function clientCard(p){
+      return `
+        <article class="client-card">
+          <div class="client-head">
+            <div>
+              <h3>${safe(p.client_name)}</h3>
+              <div class="client-meta">${planLabel(p.plan)} · ${safe(p.whatsapp)}</div>
+            </div>
+            <span class="status-pill">${statusLabel(p.client_status)}</span>
+          </div>
+
+          <div class="client-grid">
+            <div class="client-field"><span>Correo</span><strong>${safe(p.email)}</strong></div>
+            <div class="client-field"><span>Objetivo</span><strong>${safe(p.main_goal)}</strong></div>
+            <div class="client-field"><span>Nivel</span><strong>${safe(p.training_level)}</strong></div>
+            <div class="client-field"><span>Días</span><strong>${safe(p.training_days)}</strong></div>
+            <div class="client-field"><span>Sesión</span><strong>${safe(p.session_time)}</strong></div>
+            <div class="client-field"><span>Lugar</span><strong>${safe(p.training_place)}</strong></div>
+            <div class="client-field wide"><span>Limitaciones</span><strong>${safe(p.limitations)}</strong></div>
+          </div>
+
+          <div class="client-actions">
+            ${p.client_status !== "routine_in_progress" && p.client_status !== "delivered"
+              ? `<button class="gold-btn" onclick="updateClientStatus('${p.order_id}','routine_in_progress')">En proceso</button>` : ""}
+            ${p.client_status !== "delivered"
+              ? `<button class="gold-btn" onclick="updateClientStatus('${p.order_id}','delivered')">Entregada</button>` : ""}
+            <button class="outline-btn" onclick="reopenAccess('${p.order_id}')">Reabrir acceso</button>
+            ${p.whatsapp ? `<a class="outline-btn" target="_blank" rel="noopener" href="https://wa.me/52${String(p.whatsapp).replace(/\\D/g,'')}">WhatsApp</a>` : ""}
+          </div>
+        </article>`;
+    }
+
+    function renderClients(){
+      const profiles = allProfiles.filter(p => {
+        if(p.client_status === "delivered") return false;
+        if(currentFilter === "all") return true;
+        return p.client_status === currentFilter;
       });
 
-      if (!r.ok) {
+      clientsList.innerHTML = profiles.length
+        ? profiles.map(clientCard).join("")
+        : `<div class="empty-state">No hay clientes en este estado.</div>`;
+    }
+
+    function renderDelivered(){
+      const profiles = allProfiles.filter(p => p.client_status === "delivered");
+      deliveredList.innerHTML = profiles.length
+        ? profiles.map(clientCard).join("")
+        : `<div class="empty-state">Todavía no hay rutinas entregadas.</div>`;
+    }
+
+    function renderPayments(){
+      const pending = allOrders.filter(o =>
+        ["pending_transfer","transfer_reported"].includes(o.status)
+      );
+
+      paymentsList.innerHTML = pending.length
+        ? pending.map(o => `
+          <article class="payment-row">
+            <div>
+              <strong>${planLabel(o.plan)}</strong>
+              <small>${safe(o.reported_by)}</small>
+            </div>
+            <div>
+              <small>Referencia</small>
+              <strong>${safe(o.reference)}</strong>
+            </div>
+            <div>
+              <small>Monto</small>
+              <strong>$${safe(o.amount)} MXN</strong>
+            </div>
+            <div>
+              <small>Estado</small>
+              <strong>${safe(o.status)}</strong>
+            </div>
+            <div class="payment-actions">
+              <button class="gold-btn" onclick="setPaymentStatus('${o.order_id}','approved')">Aprobar</button>
+              <button class="reject-btn" onclick="setPaymentStatus('${o.order_id}','rejected')">Rechazar</button>
+            </div>
+          </article>
+        `).join("")
+        : `<div class="empty-state">No hay pagos pendientes.</div>`;
+    }
+
+    async function updateClientStatus(orderId,status){
+      const r = await fetch("/api/admin/client-status",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${keyInput.value}`
+        },
+        body:JSON.stringify({order_id:orderId,status})
+      });
+
+      if(!r.ok){
         alert("No se pudo actualizar el estado.");
         return;
       }
 
-      await loadProfiles();
+      await fetchData();
     }
 
-    async function reopenAccess(orderId) {
-      if (!confirm("Esto generará un nuevo código para que el cliente pueda volver a entrar al cuestionario. ¿Continuar?")) return;
+    async function reopenAccess(orderId){
+      if(!confirm("¿Generar un nuevo código para este cliente?")) return;
 
-      const r = await fetch("/api/admin/reopen-access", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keyInput.value}`
+      const r = await fetch("/api/admin/reopen-access",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${keyInput.value}`
         },
-        body: JSON.stringify({ order_id: orderId })
+        body:JSON.stringify({order_id:orderId})
       });
 
       const data = await r.json();
 
-      if (!r.ok || !data.access_code) {
+      if(!r.ok || !data.access_code){
         alert("No se pudo reabrir el acceso.");
         return;
       }
 
-      try {
-        await navigator.clipboard.writeText(data.access_code);
-      } catch (_) {}
-
-      alert(`Nuevo código de acceso:\\n\\n${data.access_code}\\n\\nSe copió al portapapeles.`);
-      loadOrders();
+      try{ await navigator.clipboard.writeText(data.access_code); }catch(_){}
+      alert(`Nuevo código:\\n\\n${data.access_code}\\n\\nSe copió al portapapeles.`);
+      await fetchData();
     }
 
-    async function setStatus(orderId, status) {
-      if (!confirm(status === "approved" ? "¿Ya verificaste el depósito en el banco?" : "¿Marcar esta orden como rechazada?")) return;
+    async function setPaymentStatus(orderId,status){
+      if(status==="approved" && !confirm("¿Ya verificaste el depósito en la banca?")) return;
 
-      const r = await fetch("/api/admin/order-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keyInput.value}`
+      const r = await fetch("/api/admin/order-status",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${keyInput.value}`
         },
-        body: JSON.stringify({ order_id: orderId, status })
+        body:JSON.stringify({order_id:orderId,status})
       });
-
-      if (!r.ok) {
-        alert("No se pudo actualizar.");
-        return;
-      }
 
       const data = await r.json();
 
-      if (status === "approved") {
-        localStorage.setItem(
-          "forgeAdminApprovedOrder",
-          JSON.stringify({
-            orderId,
-            approvedAt: new Date().toISOString()
-          })
-        );
-
-        if (data.access_code) {
-          try {
-            await navigator.clipboard.writeText(data.access_code);
-          } catch (_) {}
-
-          alert(
-            `Pago aprobado. Código para el cliente:\n\n${data.access_code}\n\n` +
-            `El código se copió al portapapeles.`
-          );
-        }
+      if(!r.ok){
+        alert("No se pudo actualizar el pago.");
+        return;
       }
 
-      loadOrders();
-    }
-
-    async function copyAccessCode(code) {
-      try {
-        await navigator.clipboard.writeText(code);
-        alert(`Código copiado: ${code}`);
-      } catch (_) {
-        prompt("Copia este código:", code);
+      if(status==="approved" && data.access_code){
+        try{ await navigator.clipboard.writeText(data.access_code); }catch(_){}
+        alert(`Pago aprobado. Código del cliente:\\n\\n${data.access_code}\\n\\nSe copió al portapapeles.`);
       }
+
+      await fetchData();
     }
 
-    document.getElementById("loadOrders").addEventListener("click", loadOrders);
+    document.getElementById("loadDashboard").addEventListener("click",fetchData);
+
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderClients();
+      });
+    });
   </script>
 </body>
 </html>

@@ -1,3 +1,12 @@
+# FORGE v14 — Admin rediseñado
+
+Panel nuevo con:
+- Dashboard resumen
+- Pestañas Clientes / Pagos / Entregadas
+- Clientes como vista principal
+- Pagos compactos y separados
+- Filtros por estado
+
 # FORGE v13 — Contacto, estados y código de un solo uso
 
 Cambios:
