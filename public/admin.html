@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FORGE | Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body{background:#050505;color:#fff}
+    .admin-shell{max-width:1280px;margin:0 auto;padding:40px 5% 80px}
+    .admin-top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:28px}
+    .admin-top h1{font-size:clamp(2.2rem,5vw,4rem);margin:4px 0 0;letter-spacing:-.05em}
+    .admin-top p{color:#8f8a80;margin-top:8px}
+    .admin-login{display:flex;gap:10px;align-items:center}
+    .admin-login input{min-height:46px;background:#070706;border:1px solid rgba(230,173,46,.22);color:#fff;padding:0 12px;min-width:240px}
+    .dashboard-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 28px}
+    .summary-card{border:1px solid rgba(230,173,46,.16);background:#090806;padding:18px}
+    .summary-card span{display:block;color:#777169;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}
+    .summary-card strong{display:block;font-size:2rem;margin-top:6px;color:#e6ad2e}
+    .tabs{display:flex;gap:8px;border-bottom:1px solid rgba(230,173,46,.14);margin-bottom:22px;overflow:auto}
+    .tab-btn{border:0;background:transparent;color:#817b72;padding:13px 16px;cursor:pointer;font-weight:800;border-bottom:2px solid transparent;white-space:nowrap}
+    .tab-btn.active{color:#f0e9dc;border-bottom-color:#e6ad2e}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    .notify-btn{position:relative}.notify-badge{display:none;position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;border-radius:999px;background:#e6ad2e;color:#050505;font-size:.65rem;font-weight:900;align-items:center;justify-content:center;padding:0 5px}
+    .notification-list{display:grid;gap:10px}.notification-card{border:1px solid rgba(230,173,46,.14);background:#090806;padding:16px}.notification-card.unread{border-color:#e6ad2e}.notification-card h3{margin:0 0 6px;font-size:1rem}.notification-card p{margin:0;color:#aaa296;white-space:pre-wrap;line-height:1.5;font-size:.8rem}.notification-card small{display:block;color:#69645d;margin-top:10px}
+    .section-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+    .filter-btn{border:1px solid rgba(230,173,46,.16);background:#070706;color:#8f8a80;padding:8px 11px;cursor:pointer;font-size:.72rem}
+    .filter-btn.active{color:#f4ead7;border-color:#e6ad2e}
+    .client-list{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .client-card,.routine-card{border:1px solid rgba(230,173,46,.18);background:#090806;padding:20px}
+    .client-head,.routine-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .client-head h3,.routine-head h3{margin:0;font-size:1.2rem}
+    .client-meta{color:#8f8a80;font-size:.75rem;margin-top:4px}
+    .status-pill{padding:6px 9px;border:1px solid rgba(230,173,46,.18);font-size:.68rem;color:#d8c184;white-space:nowrap}
+    .client-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .client-field{border:1px solid rgba(230,173,46,.09);background:#070706;padding:10px}
+    .client-field span{display:block;color:#6f6a62;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em}
+    .client-field strong{display:block;color:#ddd5c7;font-size:.78rem;margin-top:3px;white-space:pre-wrap}
+    .client-field.wide{grid-column:1/-1}
+    .client-actions,.routine-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .client-actions .gold-btn,.client-actions .outline-btn,.routine-actions .gold-btn,.routine-actions .outline-btn{padding:9px 11px;font-size:.7rem}
+    .payment-list{display:grid;gap:10px}
+    .payment-row{display:grid;grid-template-columns:1.2fr .8fr .8fr .7fr auto;gap:14px;align-items:center;border:1px solid rgba(230,173,46,.14);background:#090806;padding:14px 16px}
+    .payment-row small{display:block;color:#777169}
+    .payment-actions{display:flex;gap:6px}
+    .reject-btn{border:1px solid #6e5555;background:transparent;color:#d7a6a6;padding:9px 10px;cursor:pointer}
+    .empty-state{border:1px solid rgba(230,173,46,.12);background:#080706;padding:24px;color:#817b72}
+    .routine-list{display:grid;gap:16px}
+    .routine-profile{display:flex;gap:10px;flex-wrap:wrap;color:#8f8a80;font-size:.75rem;margin:8px 0 14px}
+    .routine-editor{width:100%;min-height:430px;resize:vertical;background:#050505;border:1px solid rgba(230,173,46,.18);color:#e7dfd2;padding:16px;line-height:1.55;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .routine-editor:focus{outline:none;border-color:#e6ad2e}
+    .ai-note{border-left:2px solid #e6ad2e;background:#0a0907;color:#938c80;padding:12px 14px;margin-bottom:16px;font-size:.75rem}
+    .brain-hero{border:1px solid rgba(230,173,46,.2);background:linear-gradient(135deg,#0a0907,#050505);padding:24px;margin-bottom:18px}
+    .brain-hero h2{font-size:2rem;margin:5px 0 8px}
+    .brain-hero p{color:#928b80;max-width:760px;line-height:1.6}
+    .brain-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+    .brain-stat{border:1px solid rgba(230,173,46,.12);background:#080706;padding:14px}
+    .brain-stat span{display:block;color:#706b63;font-size:.64rem;text-transform:uppercase}
+    .brain-stat strong{display:block;color:#e6ad2e;font-size:1.65rem;margin-top:5px}
+    .brain-list{display:grid;gap:10px}
+    .brain-item{border:1px solid rgba(230,173,46,.12);background:#080706;padding:14px}
+    .brain-item strong{display:block}.brain-item small{color:#777169}
+    .brain-rating{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .brain-rating button{border:1px solid rgba(230,173,46,.16);background:#070706;color:#cfc7b9;padding:8px 10px;cursor:pointer;font-size:.7rem}
+    .brain-rating button:hover{border-color:#e6ad2e}
+    .brain-note-input{width:100%;margin-top:8px;min-height:58px;background:#050505;border:1px solid rgba(230,173,46,.14);color:#fff;padding:10px;resize:vertical}
+    @media(max-width:850px){.brain-stats{grid-template-columns:1fr 1fr}}
+    @media(max-width:500px){.brain-stats{grid-template-columns:1fr}}
+    .loading-btn{opacity:.65;pointer-events:none}
+    @media(max-width:900px){
+      .dashboard-summary{grid-template-columns:1fr}
+      .client-list{grid-template-columns:1fr}
+      .payment-row{grid-template-columns:1fr 1fr}
+      .payment-actions{grid-column:1/-1}
+      .admin-top{flex-direction:column;align-items:flex-start}
+      .admin-login{width:100%}.admin-login input{flex:1;min-width:0}
+    }
+    @media(max-width:600px){
+      .client-grid{grid-template-columns:1fr}.client-field.wide{grid-column:auto}
+      .payment-row{grid-template-columns:1fr}.payment-actions{grid-column:auto}
+    }
+  </style>
+</head>
+<body>
+  <main class="admin-shell">
+    <div class="admin-top">
+      <div>
+        <span class="kicker">FORGE ADMIN</span>
+        <h1>Panel de clientes</h1>
+        <p>Clientes, rutinas con IA, entregas y pagos.</p>
+      </div>
+      <div class="admin-login">
+        <input id="adminKey" type="password" autocomplete="current-password" placeholder="Clave admin">
+        <button class="gold-btn" id="loadDashboard">Entrar</button>
+        <button class="outline-btn notify-btn" id="openNotifications" type="button" hidden>🔔 Avisos<span class="notify-badge" id="notifyBadge">0</span></button>
+      </div>
+    </div>
+
+    <section id="dashboard" hidden>
+      <div class="dashboard-summary">
+        <div class="summary-card"><span>Pagos pendientes</span><strong id="summaryPending">0</strong></div>
+        <div class="summary-card"><span>Clientes activos</span><strong id="summaryActive">0</strong></div>
+        <div class="summary-card"><span>Entregadas</span><strong id="summaryDelivered">0</strong></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="clients">Clientes</button>
+        <button class="tab-btn" data-tab="routines">Rutinas IA</button>
+        <button class="tab-btn" data-tab="brain">🧠 FORGE Brain</button>
+        <button class="tab-btn" data-tab="payments">Pagos</button>
+        <button class="tab-btn" data-tab="delivered">Entregadas</button>
+        <button class="tab-btn" data-tab="notifications">Avisos</button>
+      </div>
+
+      <section class="tab-panel active" id="tab-clients">
+        <div class="section-tools">
+          <div class="filter-row">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="questionnaire_submitted">Cuestionario enviado</button>
+            <button class="filter-btn" data-filter="routine_in_progress">En proceso</button>
+          </div>
+        </div>
+        <div id="clientsList" class="client-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-routines">
+        <div class="ai-note">
+          FORGE AI crea un borrador. Alex debe revisarlo y editarlo antes de entregarlo al cliente.
+          <div style="margin-top:12px">
+            <button class="outline-btn" id="testAIButton" type="button">⚡ Probar conexión IA</button>
+            <span id="aiTestResult" style="margin-left:10px"></span>
+          </div>
+        </div>
+        <div id="routinesList" class="routine-list"></div>
+      </section>
+
+
+      <section class="tab-panel" id="tab-brain">
+        <div class="brain-hero">
+          <span class="kicker">FORGE BRAIN</span>
+          <h2>El conocimiento propio de FORGE.</h2>
+          <p>
+            FORGE Brain conserva lo que propuso la IA, lo que Alex corrigió y la rutina final entregada.
+            Los nuevos borradores pueden consultar rutinas FORGE similares ya aprobadas como referencia.
+          </p>
+        </div>
+
+        <div class="brain-stats">
+          <div class="brain-stat"><span>Rutinas entregadas</span><strong id="brainDelivered">0</strong></div>
+          <div class="brain-stat"><span>Borradores IA guardados</span><strong id="brainDrafts">0</strong></div>
+          <div class="brain-stat"><span>Ediciones de Alex</span><strong id="brainEdits">0</strong></div>
+          <div class="brain-stat"><span>Evaluaciones</span><strong id="brainFeedbackCount">0</strong></div>
+        </div>
+
+        <div class="ai-note">
+          Esto es aprendizaje por memoria y recuperación de casos FORGE aprobados; todavía no es entrenamiento/fine-tuning de un modelo.
+          Cuando tengamos suficientes ejemplos de calidad podremos preparar un dataset especializado.
+        </div>
+
+        <div class="section-tools">
+          <span class="kicker">CASOS QUE YA ALIMENTAN FORGE BRAIN</span>
+        </div>
+        <div id="brainExamples" class="brain-list"></div>
+
+        <div class="section-tools" style="margin-top:28px">
+          <span class="kicker">FEEDBACK DE ALEX</span>
+        </div>
+        <div id="brainFeedbackList" class="brain-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-payments">
+        <div id="paymentsList" class="payment-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-delivered">
+        <div id="deliveredList" class="client-list"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-notifications">
+        <div class="section-tools">
+          <span class="kicker">AVISOS FORGE</span>
+          <button class="outline-btn" id="markAllRead" type="button">Marcar todo leído</button>
+        </div>
+        <div id="notificationsList" class="notification-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const keyInput = document.getElementById("adminKey");
+    const dashboard = document.getElementById("dashboard");
+    const clientsList = document.getElementById("clientsList");
+    const routinesList = document.getElementById("routinesList");
+    const paymentsList = document.getElementById("paymentsList");
+    const deliveredList = document.getElementById("deliveredList");
+    const notificationsList = document.getElementById("notificationsList");
+    const notifyBadge = document.getElementById("notifyBadge");
+    const openNotifications = document.getElementById("openNotifications");
+    let allNotifications = [];
+
+    let allOrders = [];
+    let allProfiles = [];
+    let allRoutines = [];
+    let brainData = {stats:{},feedback:[],examples:[]};
+    let currentFilter = "all";
+
+    function safe(v){
+      if(v===null||v===undefined||v==="") return "—";
+      return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    function planLabel(plan){
+      return {forge:"FORGE Personalizado",essential:"Essential (legacy)",forge_plus:"FORGE+ (legacy)",coaching:"Coaching (legacy)"}[plan] || safe(plan);
+    }
+
+    function statusLabel(status){
+      return {
+        questionnaire_submitted:"Cuestionario enviado",
+        routine_in_progress:"Rutina en proceso",
+        delivered:"Entregada"
+      }[status] || safe(status);
+    }
+
+    function routineByOrder(orderId){
+      return allRoutines.find(r=>r.order_id===orderId);
+    }
+
+    async function fetchData(){
+      const key = keyInput.value.trim();
+      if(!key){ alert("Escribe la clave admin."); return false; }
+
+      const [ordersRes, profilesRes, routinesRes, notificationsRes, brainRes] = await Promise.all([
+        fetch("/api/admin/orders",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"}),
+        fetch("/api/admin/profiles",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"}),
+        fetch("/api/admin/routines",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"}),
+        fetch("/api/admin/notifications",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"}),
+        fetch("/api/admin/brain",{headers:{Authorization:`Bearer ${key}`},cache:"no-store"})
+      ]);
+
+      if(!ordersRes.ok || !profilesRes.ok || !routinesRes.ok || !notificationsRes.ok || !brainRes.ok){
+        alert("Clave incorrecta o no se pudo cargar el panel.");
+        return false;
+      }
+
+      const ordersData = await ordersRes.json();
+      const profilesData = await profilesRes.json();
+      const routinesData = await routinesRes.json();
+      const notificationsData = await notificationsRes.json();
+      const loadedBrainData = await brainRes.json();
+
+      allOrders = ordersData.orders || [];
+      allProfiles = profilesData.profiles || [];
+      allRoutines = routinesData.routines || [];
+      allNotifications = notificationsData.notifications || [];
+      brainData = loadedBrainData || {stats:{},feedback:[],examples:[]};
+
+      openNotifications.hidden = false;
+      updateNotificationBadge(notificationsData.unread || 0);
+      dashboard.hidden = false;
+      renderAll();
+      return true;
+    }
+
+    function renderAll(){
+      renderSummary();
+      renderClients();
+      renderRoutines();
+      renderPayments();
+      renderDelivered();
+      renderNotifications();
+      renderBrain();
+    }
+
+    function renderSummary(){
+      const pending = allOrders.filter(o=>["pending_transfer","transfer_reported"].includes(o.status)).length;
+      const active = allProfiles.filter(p=>["questionnaire_submitted","routine_in_progress"].includes(p.client_status)).length;
+      const delivered = allProfiles.filter(p=>p.client_status==="delivered").length;
+      document.getElementById("summaryPending").textContent=pending;
+      document.getElementById("summaryActive").textContent=active;
+      document.getElementById("summaryDelivered").textContent=delivered;
+    }
+
+    function activateTab(name){
+      document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+      document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+      document.getElementById(`tab-${name}`).classList.add("active");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    function clientCard(p){
+      const r = routineByOrder(p.order_id);
+      return `
+        <article class="client-card">
+          <div class="client-head">
+            <div>
+              <h3>${safe(p.client_name)}</h3>
+              <div class="client-meta">${planLabel(p.plan)} · ${safe(p.whatsapp)}</div>
+            </div>
+            <span class="status-pill">${statusLabel(p.client_status)}</span>
+          </div>
+          <div class="client-grid">
+            <div class="client-field"><span>Correo</span><strong>${safe(p.email)}</strong></div>
+            <div class="client-field"><span>Objetivo</span><strong>${safe(p.main_goal)}</strong></div>
+            <div class="client-field"><span>Nivel</span><strong>${safe(p.training_level)}</strong></div>
+            <div class="client-field"><span>Días</span><strong>${safe(p.training_days)}</strong></div>
+            <div class="client-field"><span>Sesión</span><strong>${safe(p.session_time)}</strong></div>
+            <div class="client-field"><span>Rutina</span><strong>${r ? (r.status==="delivered"?"Entregada":"Borrador") : "Sin generar"}</strong></div>
+            <div class="client-field wide"><span>Limitaciones</span><strong>${safe(p.limitations)}</strong></div>
+          </div>
+          <div class="client-actions">
+            <button class="gold-btn" onclick="openRoutine('${p.order_id}')">${r ? "Abrir rutina" : "Generar rutina IA"}</button>
+            <button class="outline-btn" onclick="reopenAccess('${p.order_id}')">Reabrir acceso</button>
+            ${p.whatsapp ? `<a class="outline-btn" target="_blank" rel="noopener" href="https://wa.me/52${String(p.whatsapp).replace(/\D/g,'')}">WhatsApp</a>` : ""}
+          </div>
+        </article>`;
+    }
+
+    function renderClients(){
+      const profiles = allProfiles.filter(p=>{
+        if(p.client_status==="delivered") return false;
+        return currentFilter==="all" || p.client_status===currentFilter;
+      });
+      clientsList.innerHTML = profiles.length ? profiles.map(clientCard).join("") :
+        `<div class="empty-state">No hay clientes en este estado.</div>`;
+    }
+
+    function renderDelivered(){
+      const profiles = allProfiles.filter(p=>p.client_status==="delivered");
+      deliveredList.innerHTML = profiles.length ? profiles.map(clientCard).join("") :
+        `<div class="empty-state">Todavía no hay rutinas entregadas.</div>`;
+    }
+
+    function renderRoutines(){
+      if(!allProfiles.length){
+        routinesList.innerHTML=`<div class="empty-state">Aún no hay perfiles para generar rutinas.</div>`;
+        return;
+      }
+
+      routinesList.innerHTML = allProfiles.map(p=>{
+        const r = routineByOrder(p.order_id);
+        return `
+          <article class="routine-card" id="routine-${p.order_id}">
+            <div class="routine-head">
+              <div>
+                <h3>${safe(p.client_name)}</h3>
+                <div class="client-meta">${planLabel(p.plan)} · ${safe(p.main_goal)}</div>
+              </div>
+              <span class="status-pill">${r ? (r.status==="delivered"?"Entregada":"Borrador IA") : "Sin generar"}</span>
+            </div>
+
+            <div class="routine-profile">
+              <span>${safe(p.training_days)} días</span>
+              <span>· ${safe(p.session_time)}</span>
+              <span>· ${safe(p.training_level)}</span>
+              <span>· ${safe(p.training_place)}</span>
+            </div>
+
+            <textarea class="routine-editor" id="editor-${p.order_id}"
+              placeholder="Genera el borrador con FORGE AI o escribe la rutina manualmente.">${r ? safe(r.content) : ""}</textarea>
+
+            <div class="routine-actions">
+              <button class="gold-btn" onclick="generateRoutine('${p.order_id}',this)">
+                ${r ? "Regenerar con IA" : "Generar borrador IA"}
+              </button>
+              <button class="outline-btn" onclick="saveRoutine('${p.order_id}',this)">Guardar cambios</button>
+              <button class="gold-btn" onclick="deliverRoutine('${p.order_id}',this)">Entregar al cliente</button>
+            </div>
+
+            ${r ? `
+              <div class="brain-rating">
+                <span style="color:#817b72;font-size:.72rem;padding:8px 0">¿Qué tan bueno fue el borrador?</span>
+                <button onclick="rateBrain('${p.order_id}','good')">👍 Bueno</button>
+                <button onclick="rateBrain('${p.order_id}','adjustments')">🛠 Necesitó ajustes</button>
+                <button onclick="rateBrain('${p.order_id}','bad')">👎 Malo</button>
+              </div>
+            ` : ""}
+          </article>`;
+      }).join("");
+    }
+
+    function openRoutine(orderId){
+      activateTab("routines");
+      setTimeout(()=>document.getElementById(`routine-${orderId}`)?.scrollIntoView({behavior:"smooth",block:"start"}),120);
+    }
+
+    async function testAIConnection(){
+      const button = document.getElementById("testAIButton");
+      const resultEl = document.getElementById("aiTestResult");
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = "Probando...";
+      resultEl.textContent = "";
+
+      try{
+        const r = await fetch("/api/admin/ai-test",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${keyInput.value}`
+          }
+        });
+
+        const data = await r.json();
+
+        if(!r.ok || !data.ok){
+          resultEl.textContent = "❌ " + (data.error || "Falló la conexión.");
+          return;
+        }
+
+        resultEl.textContent = `✅ ${data.answer || "Workers AI conectado"}`;
+      }catch(e){
+        resultEl.textContent = "❌ " + e.message;
+      }finally{
+        button.disabled = false;
+        button.textContent = original;
+      }
+    }
+
+    async function generateRoutine(orderId,button){
+      if(!confirm("FORGE AI generará un nuevo borrador usando el cuestionario. ¿Continuar?")) return;
+      const original=button.textContent;
+      button.textContent="Generando...";
+      button.classList.add("loading-btn");
+
+      try{
+        const r=await fetch("/api/admin/generate-routine",{
+          method:"POST",
+          headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+          body:JSON.stringify({order_id:orderId})
+        });
+        const data=await r.json();
+        if(!r.ok) throw new Error(data.error||"No se pudo generar.");
+        const editor=document.getElementById(`editor-${orderId}`);
+        if(editor) editor.value=data.content;
+        await fetchData();
+        activateTab("routines");
+      }catch(e){
+        alert(e.message);
+      }finally{
+        button.textContent=original;
+        button.classList.remove("loading-btn");
+      }
+    }
+
+    async function saveRoutine(orderId,button){
+      const content=document.getElementById(`editor-${orderId}`)?.value.trim();
+      if(!content){alert("La rutina está vacía.");return;}
+      const original=button.textContent;button.textContent="Guardando...";button.disabled=true;
+      try{
+        const r=await fetch("/api/admin/save-routine",{
+          method:"POST",
+          headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+          body:JSON.stringify({order_id:orderId,content})
+        });
+        const data=await r.json();
+        if(!r.ok) throw new Error(data.error||"No se pudo guardar.");
+        alert("Rutina guardada.");
+        await fetchData();activateTab("routines");
+      }catch(e){alert(e.message)}
+      finally{button.textContent=original;button.disabled=false}
+    }
+
+    async function deliverRoutine(orderId,button){
+      const content=document.getElementById(`editor-${orderId}`)?.value.trim();
+      if(!content){alert("La rutina está vacía.");return;}
+      if(!confirm("¿Ya revisaste la rutina y quieres entregarla al cliente?")) return;
+
+      button.disabled=true;
+      try{
+        let r=await fetch("/api/admin/save-routine",{
+          method:"POST",
+          headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+          body:JSON.stringify({order_id:orderId,content})
+        });
+        if(!r.ok){const d=await r.json();throw new Error(d.error||"No se pudo guardar.");}
+
+        r=await fetch("/api/admin/deliver-routine",{
+          method:"POST",
+          headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+          body:JSON.stringify({order_id:orderId})
+        });
+        const data=await r.json();
+        if(!r.ok) throw new Error(data.error||"No se pudo entregar.");
+        alert("Rutina entregada. Ya aparece en Mi FORGE del cliente.");
+        await fetchData();activateTab("routines");
+      }catch(e){alert(e.message)}
+      finally{button.disabled=false}
+    }
+
+
+    function renderBrain(){
+      const s = brainData.stats || {};
+      document.getElementById("brainDelivered").textContent = s.delivered_routines || 0;
+      document.getElementById("brainDrafts").textContent = s.ai_drafts || 0;
+      document.getElementById("brainEdits").textContent = s.trainer_edits || 0;
+      document.getElementById("brainFeedbackCount").textContent = s.feedback_count || 0;
+
+      const examples = brainData.examples || [];
+      document.getElementById("brainExamples").innerHTML = examples.length
+        ? examples.map(e => `
+            <article class="brain-item">
+              <strong>${safe(e.client_name)} · ${safe(e.main_goal)}</strong>
+              <small>${safe(e.training_level)} · ${safe(e.training_days)} días · ${safe(e.session_time)} · ${safe(e.training_place)}</small>
+            </article>
+          `).join("")
+        : `<div class="empty-state">Todavía no hay rutinas entregadas para alimentar FORGE Brain.</div>`;
+
+      const feedback = brainData.feedback || [];
+      document.getElementById("brainFeedbackList").innerHTML = feedback.length
+        ? feedback.map(f => `
+            <article class="brain-item">
+              <strong>${safe(f.client_name)} · ${
+                f.rating==="good" ? "👍 Bueno" :
+                f.rating==="adjustments" ? "🛠 Necesitó ajustes" : "👎 Malo"
+              }</strong>
+              <small>${safe(f.main_goal)} · ${safe(f.training_level)} · ${safe(f.created_at)}</small>
+              ${f.notes ? `<p style="color:#a9a196;font-size:.78rem;margin:8px 0 0">${safe(f.notes)}</p>` : ""}
+            </article>
+          `).join("")
+        : `<div class="empty-state">Aún no has calificado borradores de FORGE AI.</div>`;
+    }
+
+    async function rateBrain(orderId, rating){
+      const categories = [];
+      if(rating !== "good"){
+        const raw = prompt(
+          "¿Qué cambiaste principalmente? Puedes escribir varias separadas por coma:\\n" +
+          "volumen, ejercicios, frecuencia, descansos, progresión, distribución, limitaciones, otro"
+        );
+        if(raw){
+          raw.split(",").map(v=>v.trim()).filter(Boolean).slice(0,10).forEach(v=>categories.push(v));
+        }
+      }
+
+      const notes = prompt(
+        rating === "good"
+          ? "Comentario opcional para FORGE Brain:"
+          : "¿Qué debería hacer mejor FORGE AI la próxima vez? (opcional)"
+      ) || "";
+
+      const r = await fetch("/api/admin/brain/feedback",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${keyInput.value}`
+        },
+        body:JSON.stringify({
+          order_id:orderId,
+          rating,
+          categories,
+          notes
+        })
+      });
+
+      const data = await r.json();
+      if(!r.ok){
+        alert(data.error || "No se pudo guardar el feedback.");
+        return;
+      }
+
+      alert("Feedback guardado en FORGE Brain.");
+      await fetchData();
+      activateTab("brain");
+    }
+
+    function updateNotificationBadge(count){
+      notifyBadge.textContent=String(count);
+      notifyBadge.style.display=count>0?"flex":"none";
+    }
+
+    function renderNotifications(){
+      notificationsList.innerHTML=allNotifications.length
+        ? allNotifications.map(n=>`
+          <article class="notification-card ${Number(n.is_read)===0?"unread":""}">
+            <h3>${safe(n.title)}</h3>
+            <p>${safe(n.message)}</p>
+            <small>${safe(n.created_at)}</small>
+          </article>`).join("")
+        : `<div class="empty-state">Todavía no hay avisos.</div>`;
+    }
+
+    async function markNotificationsRead(){
+      const r=await fetch("/api/admin/notifications/read",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+        body:JSON.stringify({})
+      });
+      if(r.ok) await fetchData();
+    }
+
+    function renderPayments(){
+      const pending=allOrders.filter(o=>["pending_transfer","transfer_reported"].includes(o.status));
+      paymentsList.innerHTML=pending.length?pending.map(o=>`
+        <article class="payment-row">
+          <div><strong>${planLabel(o.plan)}</strong><small>${safe(o.reported_by)}</small></div>
+          <div><small>Referencia</small><strong>${safe(o.reference)}</strong></div>
+          <div><small>Monto</small><strong>$${safe(o.amount)} MXN</strong></div>
+          <div><small>Estado</small><strong>${safe(o.status)}</strong></div>
+          <div class="payment-actions">
+            <button class="gold-btn" onclick="setPaymentStatus('${o.order_id}','approved')">Aprobar</button>
+            <button class="reject-btn" onclick="setPaymentStatus('${o.order_id}','rejected')">Rechazar</button>
+          </div>
+        </article>`).join(""):`<div class="empty-state">No hay pagos pendientes.</div>`;
+    }
+
+    async function reopenAccess(orderId){
+      if(!confirm("Esto invalida el código anterior y genera uno nuevo. ¿Continuar?")) return;
+      const r=await fetch("/api/admin/reopen-access",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+        body:JSON.stringify({order_id:orderId})
+      });
+      const data=await r.json();
+      if(!r.ok||!data.access_code){alert(data.error||"No se pudo reabrir el acceso.");return;}
+      try{await navigator.clipboard.writeText(data.access_code)}catch(_){}
+      alert(`Nuevo código:\n\n${data.access_code}\n\nSe copió al portapapeles.`);
+      await fetchData();
+    }
+
+    async function setPaymentStatus(orderId,status){
+      if(status==="approved"&&!confirm("¿Ya verificaste el depósito en la banca?")) return;
+      const r=await fetch("/api/admin/order-status",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${keyInput.value}`},
+        body:JSON.stringify({order_id:orderId,status})
+      });
+      const data=await r.json();
+      if(!r.ok){alert(data.error||"No se pudo actualizar el pago.");return;}
+      if(status==="approved"&&data.access_code){
+        try{await navigator.clipboard.writeText(data.access_code)}catch(_){}
+        alert(`Pago aprobado. Código del cliente:\n\n${data.access_code}\n\nSe copió al portapapeles.`);
+      }
+      await fetchData();
+    }
+
+    document.getElementById("loadDashboard").addEventListener("click",fetchData);
+    document.getElementById("testAIButton")?.addEventListener("click",testAIConnection);
+    openNotifications.addEventListener("click",()=>activateTab("notifications"));
+    document.getElementById("markAllRead").addEventListener("click",markNotificationsRead);
+
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter=btn.dataset.filter;
+        renderClients();
+      });
+    });
+  </script>
+</body>
+</html>
